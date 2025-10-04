@@ -1,0 +1,96 @@
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "Orbit Script",
+    LoadingTitle = "Orbit Script",
+    LoadingSubtitle = "Rayfield UI",
+    ConfigurationSaving = {Enabled = false}
+})
+
+local spinning = false
+local radius = 10
+local speed = 0.15
+local targetPlayer
+
+local RunService = game:GetService("RunService")
+local LocalPlayer = game.Players.LocalPlayer
+local HRP = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait():WaitForChild("HumanoidRootPart")
+
+local function GetPlayerNames()
+    local names = {}
+    for _, plr in ipairs(game.Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            table.insert(names, plr.Name)
+        end
+    end
+    return names
+end
+
+local Tab = Window:CreateTab("Main", 4483362458)
+
+local Dropdown = Tab:CreateDropdown({
+    Name = "Target Player",
+    Options = GetPlayerNames(),
+    CurrentOption = "",
+    Callback = function(value)
+        targetPlayer = game.Players:FindFirstChild(value)
+    end
+})
+
+Tab:CreateButton({
+    Name = "Refresh Player List",
+    Callback = function()
+        Dropdown:Set(GetPlayerNames())
+    end
+})
+
+Tab:CreateSlider({
+    Name = "Orbit Radius",
+    Range = {5, 50},
+    Increment = 1,
+    CurrentValue = 10,
+    Callback = function(value)
+        radius = value
+    end
+})
+
+Tab:CreateSlider({
+    Name = "Orbit Speed",
+    Range = {1, 50},
+    Increment = 1,
+    CurrentValue = 15,
+    Callback = function(value)
+        speed = value / 100
+    end
+})
+
+Tab:CreateButton({
+    Name = "Start Orbit",
+    Callback = function()
+        if not targetPlayer or not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            return
+        end
+        spinning = true
+        local angle = 0
+        RunService.RenderStepped:Connect(function()
+            if spinning and targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local targetHRP = targetPlayer.Character.HumanoidRootPart
+                angle = angle + speed
+                local x = math.cos(angle) * radius
+                local z = math.sin(angle) * radius
+                local y = targetHRP.Position.Y
+                HRP.CFrame = CFrame.new(
+                    Vector3.new(targetHRP.Position.X + x, y, targetHRP.Position.Z + z),
+                    targetHRP.Position
+                )
+            end
+        end)
+    end
+})
+
+Tab:CreateButton({
+    Name = "Stop Orbit",
+    Callback = function()
+        spinning = false
+    end
+})
