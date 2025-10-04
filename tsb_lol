@@ -1,0 +1,115 @@
+local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
+local Window = OrionLib:MakeWindow({
+    Name = "Orbit Script",
+    HidePremium = false,
+    SaveConfig = true,
+    ConfigFolder = "OrbitConfig"
+})
+
+local spinning = false
+local radius = 10
+local speed = 0.15
+local targetPlayer = nil
+
+local RunService = game:GetService("RunService")
+local LocalPlayer = game.Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HRP = Character:WaitForChild("HumanoidRootPart")
+
+local function GetPlayerNames()
+    local names = {}
+    for _, plr in pairs(game.Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            table.insert(names, plr.Name)
+        end
+    end
+    return names
+end
+
+local Tab = Window:MakeTab({
+    Name = "メイン",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+Tab:AddDropdown({
+    Name = "ターゲットプレイヤー",
+    Default = "",
+    Options = GetPlayerNames(),
+    Callback = function(value)
+        targetPlayer = game.Players:FindFirstChild(value)
+    end
+})
+
+Tab:AddButton({
+    Name = "プレイヤーリスト更新",
+    Callback = function()
+        Tab:AddDropdown({
+            Name = "ターゲットプレイヤー",
+            Default = "",
+            Options = GetPlayerNames(),
+            Callback = function(value)
+                targetPlayer = game.Players:FindFirstChild(value)
+            end
+        })
+    end
+})
+
+Tab:AddSlider({
+    Name = "回転半径 (距離)",
+    Min = 5,
+    Max = 50,
+    Default = 10,
+    Increment = 1,
+    Color = Color3.fromRGB(0, 255, 0),
+    ValueName = "Studs",
+    Callback = function(value)
+        radius = value
+    end
+})
+
+Tab:AddSlider({
+    Name = "回転速度",
+    Min = 1,
+    Max = 50,
+    Default = 15,
+    Increment = 1,
+    Color = Color3.fromRGB(255, 0, 0),
+    ValueName = "Speed",
+    Callback = function(value)
+        speed = value / 100
+    end
+})
+
+Tab:AddButton({
+    Name = "回転開始",
+    Callback = function()
+        if not targetPlayer or not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            return
+        end
+
+        spinning = true
+        local angle = 0
+
+        RunService.RenderStepped:Connect(function()
+            if spinning and targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local targetHRP = targetPlayer.Character.HumanoidRootPart
+                angle = angle + speed
+                local x = math.cos(angle) * radius
+                local z = math.sin(angle) * radius
+                local y = targetHRP.Position.Y
+                HRP.CFrame = CFrame.new(
+                    Vector3.new(targetHRP.Position.X + x, y, targetHRP.Position.Z + z),
+                    targetHRP.Position
+                )
+            end
+        end)
+    end
+})
+
+Tab:AddButton({
+    Name = "回転停止",
+    Callback = function()
+        spinning = false
+    end
+})
