@@ -1,0 +1,108 @@
+-- ScreenGui 作成
+local gui = Instance.new("ScreenGui")
+gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- メインフレーム
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 250, 0, 200)
+frame.Position = UDim2.new(0.3, 0, 0.3, 0)
+frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
+frame.Parent = gui
+
+-- タイトル
+local title = Instance.new("TextLabel")
+title.Text = "Orbit Script"
+title.Size = UDim2.new(1,0,0,30)
+title.BackgroundColor3 = Color3.fromRGB(60,60,60)
+title.TextColor3 = Color3.new(1,1,1)
+title.Parent = frame
+
+-- 入力欄（ターゲットプレイヤー名）
+local input = Instance.new("TextBox")
+input.PlaceholderText = "Player Name"
+input.Size = UDim2.new(1,-20,0,30)
+input.Position = UDim2.new(0,10,0,40)
+input.Parent = frame
+
+-- 距離スライダー
+local radiusSlider = Instance.new("TextBox")
+radiusSlider.Text = "Radius: 10"
+radiusSlider.Size = UDim2.new(1,-20,0,30)
+radiusSlider.Position = UDim2.new(0,10,0,80)
+radiusSlider.Parent = frame
+
+-- 速度スライダー
+local speedSlider = Instance.new("TextBox")
+speedSlider.Text = "Speed: 15"
+speedSlider.Size = UDim2.new(1,-20,0,30)
+speedSlider.Position = UDim2.new(0,10,0,120)
+speedSlider.Parent = frame
+
+-- 開始ボタン
+local startBtn = Instance.new("TextButton")
+startBtn.Text = "Start Orbit"
+startBtn.Size = UDim2.new(1,-20,0,30)
+startBtn.Position = UDim2.new(0,10,0,160)
+startBtn.Parent = frame
+
+-- 停止ボタン
+local stopBtn = Instance.new("TextButton")
+stopBtn.Text = "Stop Orbit"
+stopBtn.Size = UDim2.new(1,-20,0,30)
+stopBtn.Position = UDim2.new(0,10,0,195)
+stopBtn.Parent = frame
+
+-- 処理部分
+local spinning = false
+local radius = 10
+local speed = 0.15
+local targetPlayer
+
+local RunService = game:GetService("RunService")
+local LocalPlayer = game.Players.LocalPlayer
+local HRP = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait():WaitForChild("HumanoidRootPart")
+
+input.FocusLost:Connect(function()
+    targetPlayer = game.Players:FindFirstChild(input.Text)
+end)
+
+radiusSlider.FocusLost:Connect(function()
+    local num = tonumber(radiusSlider.Text:match("%d+"))
+    if num then
+        radius = num
+        radiusSlider.Text = "Radius: " .. num
+    end
+end)
+
+speedSlider.FocusLost:Connect(function()
+    local num = tonumber(speedSlider.Text:match("%d+"))
+    if num then
+        speed = num / 100
+        speedSlider.Text = "Speed: " .. num
+    end
+end)
+
+startBtn.MouseButton1Click:Connect(function()
+    if not targetPlayer or not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        return
+    end
+    spinning = true
+    local angle = 0
+    RunService.RenderStepped:Connect(function()
+        if spinning and targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local targetHRP = targetPlayer.Character.HumanoidRootPart
+            angle = angle + speed
+            local x = math.cos(angle) * radius
+            local z = math.sin(angle) * radius
+            local y = targetHRP.Position.Y
+            HRP.CFrame = CFrame.new(
+                Vector3.new(targetHRP.Position.X + x, y, targetHRP.Position.Z + z),
+                targetHRP.Position
+            )
+        end
+    end)
+end)
+
+stopBtn.MouseButton1Click:Connect(function()
+    spinning = false
+end)
