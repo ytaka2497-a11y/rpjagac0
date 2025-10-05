@@ -1,0 +1,85 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "Exyy Hub",
+    LoadingTitle = "Exyy Hub",
+    LoadingSubtitle = "by you",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "ExyyHub",
+        FileName = "Config"
+    },
+    KeySystem = false,
+    Theme = { Default = "Yellow" }
+})
+
+local Players, RunService = game:GetService("Players"), game:GetService("RunService")
+local plr, hum = Players.LocalPlayer, Players.LocalPlayer.Character:WaitForChild("Humanoid")
+
+local Main = Window:CreateTab("Main")
+
+local speed, jump = 16, 50
+local speedOn, jumpOn, noclipOn = false, false, false
+
+Main:CreateSlider({
+    Name = "WalkSpeed", Range = {16,200}, Increment = 1, CurrentValue = 16,
+    Callback = function(v) speed = v if speedOn then hum.WalkSpeed = v end end
+})
+Main:CreateToggle({
+    Name = "Speed", Callback = function(v) speedOn = v hum.WalkSpeed = v and speed or 16 end
+})
+
+Main:CreateSlider({
+    Name = "JumpPower", Range = {50,300}, Increment = 5, CurrentValue = 50,
+    Callback = function(v) jump = v if jumpOn then hum.JumpPower = v end end
+})
+Main:CreateToggle({
+    Name = "Jump", Callback = function(v) jumpOn = v hum.JumpPower = v and jump or 50 end
+})
+
+Main:CreateToggle({
+    Name = "Noclip", Callback = function(v) noclipOn = v end
+})
+RunService.Stepped:Connect(function()
+    if plr.Character then
+        for _,p in pairs(plr.Character:GetDescendants()) do
+            if p:IsA("BasePart") then p.CanCollide = not noclipOn end
+        end
+    end
+end)
+
+local ESP = Window:CreateTab("ESP")
+local boxOn, nameOn = false, false
+
+local function boxESP(part)
+    if not part:FindFirstChild("esp") then
+        local b = Instance.new("BoxHandleAdornment")
+        b.Name, b.Adornee, b.Size = "esp", part, part.Size
+        b.AlwaysOnTop, b.ZIndex, b.Color3, b.Transparency = true, 5, Color3.new(1,1,0), 0.5
+        b.Parent = part
+    end
+end
+
+local function nameESP(p)
+    if p.Character and not p.Character:FindFirstChild("name_esp") then
+        local h = p.Character:FindFirstChild("Head")
+        if h then
+            local gui = Instance.new("BillboardGui", h)
+            gui.Name, gui.Size, gui.StudsOffset, gui.AlwaysOnTop = "name_esp", UDim2.new(0,200,0,50), Vector3.new(0,2,0), true
+            local t = Instance.new("TextLabel", gui)
+            t.Size, t.BackgroundTransparency, t.Text, t.TextColor3, t.TextStrokeTransparency = UDim2.new(1,0,1,0), 1, p.Name, Color3.new(1,1,0), 0
+        end
+    end
+end
+
+RunService.RenderStepped:Connect(function()
+    for _,p in pairs(Players:GetPlayers()) do
+        if p ~= plr and p.Character then
+            if boxOn then for _,part in pairs(p.Character:GetChildren()) do if part:IsA("BasePart") then boxESP(part) end end end
+            if nameOn then nameESP(p) end
+        end
+    end
+end)
+
+ESP:CreateToggle({ Name = "Box ESP", Callback = function(v) boxOn = v end })
+ESP:CreateToggle({ Name = "Name ESP", Callback = function(v) nameOn = v end })
